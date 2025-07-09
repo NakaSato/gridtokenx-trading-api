@@ -13,21 +13,25 @@ pub fn create_app() -> Router {
     let state = Arc::new(Mutex::new(LedgerState::new()));
     let auth_store = Arc::new(AuthStore::new());
 
-    // Public routes (no authentication required)
+    // Public routes (no authentication required) 
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/auth/login", post(login))
-        .route("/api/auth/register", post(register));
+        .route("/api/auth/register", post(register))
+        .with_state(auth_store.clone());
 
-    // Protected routes (authentication required)
-    let protected_routes = Router::new()
-        // Authentication management
+    // Authentication management routes (require authentication)
+    let auth_routes = Router::new()
         .route("/api/auth/me", get(get_current_user))
         .route("/api/auth/refresh", post(refresh_token))
         .route("/api/auth/api-keys", get(list_api_keys))
         .route("/api/auth/api-keys", post(create_api_key))
         .route("/api/auth/api-keys/:key_id", delete(revoke_api_key))
-        
+        .with_state(auth_store.clone())
+        .layer(middleware::from_fn_with_state(auth_store.clone(), auth_middleware));
+
+    // Business logic routes (require authentication)
+    let business_routes = Router::new()
         // Blockchain endpoints
         .route("/api/blockchain/info", get(get_blockchain_info))
         .route("/api/blockchain/blocks", get(get_blocks))
@@ -65,93 +69,14 @@ pub fn create_app() -> Router {
         .route("/api/energy/trades", get(get_trade_history))
         .route("/api/energy/statistics", get(get_market_statistics))
         
-        .with_state(state.clone())
+        .with_state(state)
         .layer(middleware::from_fn_with_state(auth_store.clone(), auth_middleware));
 
-    // Combine public and protected routes
+    // Combine all routes
     Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
-        .with_state(auth_store)
-        .layer(middleware::from_fn(security_headers_middleware))
-        .layer(middleware::from_fn(request_logging))
-        .layer(cors_layer())
-}
-use crate::handlers::*;
-use crate::middleware::{cors_layer, request_logging, auth_middleware, security_headers_middleware};
-use crate::auth::AuthStore;
-use crate::auth_handlers::*;
-use axum::{
-    middleware,
-    routing::{get, post, delete},
-    Router,
-};
-use std::sync::{Arc, Mutex};
-
-pub fn create_app() -> Router {
-    let state = Arc::new(Mutex::new(LedgerState::new()));
-    let auth_store = Arc::new(AuthStore::new());
-
-    // Public routes (no authentication required)
-    let public_routes = Router::new()
-        .route("/health", get(health_check))
-        .route("/api/auth/login", post(login))
-        .route("/api/auth/register", post(register));
-
-    // Protected routes (authentication required)
-    let protected_routes = Router::new()
-        // Authentication management
-        .route("/api/auth/me", get(get_current_user))
-        .route("/api/auth/refresh", post(refresh_token))
-        .route("/api/auth/api-keys", get(list_api_keys))
-        .route("/api/auth/api-keys", post(create_api_key))
-        .route("/api/auth/api-keys/:key_id", delete(revoke_api_key))
-        
-        // Blockchain endpoints
-        .route("/api/blockchain/info", get(get_blockchain_info))
-        .route("/api/blockchain/blocks", get(get_blocks))
-        .route("/api/blockchain/blocks/:index", get(get_block))
-        .route("/api/blockchain/mine", post(mine_block))
-        .route("/api/blockchain/transactions/pending", get(get_pending_transactions))
-        
-        // Token system endpoints
-        .route("/api/tokens/accounts", post(create_token_account))
-        .route("/api/tokens/balance/:address", get(get_token_balance))
-        .route("/api/tokens/transfer", post(transfer_tokens))
-        .route("/api/tokens/stake", post(stake_tokens))
-        .route("/api/tokens/unstake", post(unstake_tokens))
-        .route("/api/tokens/rewards/:address", post(claim_rewards))
-        
-        // Governance endpoints
-        .route("/api/governance/proposals", get(get_governance_proposals))
-        .route("/api/governance/proposals", post(create_governance_proposal))
-        .route("/api/governance/vote", post(vote_on_proposal))
-        
-        // Energy trading endpoints
-        .route("/api/energy/prosumers", post(create_prosumer))
-        .route("/api/energy/prosumers", get(get_all_prosumers))
-        .route("/api/energy/prosumers/:address", get(get_prosumer))
-        .route("/api/energy/generation", post(update_energy_generation))
-        .route("/api/energy/consumption", post(update_energy_consumption))
-        
-        // Order management endpoints
-        .route("/api/energy/orders", post(create_energy_order))
-        .route("/api/energy/orders/cancel", post(cancel_energy_order))
-        .route("/api/energy/orders/buy", get(get_buy_orders))
-        .route("/api/energy/orders/sell", get(get_sell_orders))
-        
-        // Market data endpoints
-        .route("/api/energy/trades", get(get_trade_history))
-        .route("/api/energy/statistics", get(get_market_statistics))
-        
-        .with_state(state.clone())
-        .layer(middleware::from_fn_with_state(auth_store.clone(), auth_middleware));
-
-    // Combine public and protected routes
-    Router::new()
-        .merge(public_routes)
-        .merge(protected_routes)
-        .with_state(auth_store)
+        .merge(auth_routes)
+        .merge(business_routes)
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(middleware::from_fn(request_logging))
         .layer(cors_layer())
@@ -161,8 +86,8 @@ pub async fn start_server(port: u16) {
     let app = create_app();
     
     println!("🚀 Energy Trading Ledger API Server starting on port {}", port);
-    println!("� Authentication enabled with JWT and API Key support");
-    println!("�📋 Available endpoints:");
+    println!("🔐 Authentication enabled with JWT and API Key support");
+    println!("📋 Available endpoints:");
     
     // Public endpoints
     println!("   🌐 Public endpoints:");

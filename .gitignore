@@ -98,3 +98,7 @@ helm-values-*.yaml
 # Container registry credentials
 .docker/config.json
 docker-compose.override.yml
+
+# Test scripts output
+test_*.log
+test_output/
