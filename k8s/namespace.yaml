@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: energy-trading
+  labels:
+    name: energy-trading
+    app: energy-trading-api

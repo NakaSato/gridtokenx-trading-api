@@ -83,3 +83,18 @@ yarn.lock
 # Configuration files with sensitive data
 config.json
 secrets.json
+
+# Docker and Kubernetes
+.dockerignore.bak
+k8s/deployment.yaml.bak
+*.bak
+
+# Kubernetes secrets and sensitive files
+k8s/secrets/
+k8s/*-secret.yaml
+k8s/configmap-*.yaml
+helm-values-*.yaml
+
+# Container registry credentials
+.docker/config.json
+docker-compose.override.yml
