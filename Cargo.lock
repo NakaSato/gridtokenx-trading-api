@@ -736,7 +736,6 @@ dependencies = [
  "chrono",
  "pallet-energy-trading",
  "pallet-token-system",
- "reqwest",
  "serde",
  "serde_json",
  "sha2",

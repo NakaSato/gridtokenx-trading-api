@@ -254,10 +254,45 @@ pub async fn create_energy_order(State(state): State<AppState>, Json(request): J
 
 pub async fn cancel_energy_order(State(state): State<AppState>, Json(request): Json<CancelOrderRequest>) -> Json<ApiResponse<String>> {
     let mut state = state.lock().unwrap();
-    match state.energy_market.cancel_order(&request.order_id) {
-        Ok(_) => Json(ApiResponse::success("Order cancelled successfully".to_string())),
-        Err(e) => Json(ApiResponse::error(e)),
+    
+    // Check if the order exists in buy orders
+    let mut found_in_buy = false;
+    let mut buy_index = None;
+    for (index, order) in state.energy_market.buy_orders.iter().enumerate() {
+        if order.id == request.order_id && order.trader_address == request.trader_address {
+            found_in_buy = true;
+            buy_index = Some(index);
+            break;
+        }
     }
+    
+    if found_in_buy {
+        if let Some(index) = buy_index {
+            state.energy_market.buy_orders.remove(index);
+            return Json(ApiResponse::success("Buy order cancelled successfully".to_string()));
+        }
+    }
+    
+    // Check if the order exists in sell orders
+    let mut found_in_sell = false;
+    let mut sell_index = None;
+    for (index, order) in state.energy_market.sell_orders.iter().enumerate() {
+        if order.id == request.order_id && order.trader_address == request.trader_address {
+            found_in_sell = true;
+            sell_index = Some(index);
+            break;
+        }
+    }
+    
+    if found_in_sell {
+        if let Some(index) = sell_index {
+            state.energy_market.sell_orders.remove(index);
+            return Json(ApiResponse::success("Sell order cancelled successfully".to_string()));
+        }
+    }
+    
+    // Order not found
+    Json(ApiResponse::error("Order not found or you don't have permission to cancel this order".to_string()))
 }
 
 pub async fn get_buy_orders(State(state): State<AppState>) -> Json<ApiResponse<Vec<EnergyOrder>>> {
