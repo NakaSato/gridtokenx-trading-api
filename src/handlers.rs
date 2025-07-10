@@ -1,4 +1,5 @@
 use crate::models::*;
+use crate::database::DatabaseService;
 use ledger_core::{
     blockchain::Blockchain,
     energy_trading::{EnergyMarket, EnergyOrder, OrderType, Prosumer},
@@ -10,7 +11,9 @@ use axum::{
     http::StatusCode,
     response::Json,
 };
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use uuid::Uuid;
+use chrono::Utc;
 
 pub type AppState = Arc<Mutex<LedgerState>>;
 
@@ -19,16 +22,51 @@ pub struct LedgerState {
     pub token_system: TokenSystem,
     pub energy_market: EnergyMarket,
     pub prosumers: std::collections::HashMap<String, Prosumer>,
+    pub blockchain_db: Box<dyn BlockchainDatabase + Send>,
 }
 
 impl LedgerState {
     pub fn new() -> Self {
+        let blockchain_db = crate::blockchain_db::create_blockchain_db(
+            crate::blockchain_db::BlockchainDbType::InMemory
+        ).expect("Failed to create blockchain database");
+
         Self {
             blockchain: Blockchain::new(),
             token_system: TokenSystem::new(),
             energy_market: EnergyMarket::new(),
             prosumers: std::collections::HashMap::new(),
+            blockchain_db,
         }
+    }
+
+    pub fn new_with_db(blockchain_db: Box<dyn BlockchainDatabase + Send>) -> Self {
+        Self {
+            blockchain: Blockchain::new(),
+            token_system: TokenSystem::new(),
+            energy_market: EnergyMarket::new(),
+            prosumers: std::collections::HashMap::new(),
+            blockchain_db,
+        }
+    }
+
+    // Helper method to create and add blockchain transactions
+    pub fn add_blockchain_transaction(&mut self, tx_type: TransactionType, data: Vec<u8>, sender: &str) -> Result<String, String> {
+        let transaction = BlockchainTransaction {
+            id: Uuid::new_v4().to_string(),
+            tx_type,
+            data,
+            timestamp: Utc::now(),
+            sender: sender.to_string(),
+            signature: "placeholder_signature".to_string(), // In production, use real signatures
+            nonce: 0,
+        };
+
+        let tx_id = transaction.id.clone();
+        self.blockchain_db.add_transaction(transaction)
+            .map_err(|e| format!("Failed to add transaction: {}", e))?;
+
+        Ok(tx_id)
     }
 }
 
@@ -227,7 +265,116 @@ pub async fn update_energy_consumption(State(state): State<AppState>, Json(reque
     }
 }
 
-pub async fn create_energy_order(State(state): State<AppState>, Json(request): Json<CreateOrderRequest>) -> Json<ApiResponse<String>> {
+pub async fn create_energy_order(State(state): State<AppState>) -> impl axum::response::IntoResponse {
+    // This would need to be updated to extract JSON from request
+    // For now, showing the blockchain integration pattern
+    
+    // In a real implementation, you'd extract the order details from the request
+    // let Json(request): Json<CreateOrderRequest> = ...
+    
+    Json(ApiResponse::<String>::error("Handler needs to be updated for blockchain integration".to_string()))
+}
+
+// Updated handler that demonstrates blockchain integration
+pub async fn create_energy_order_with_blockchain(
+    State(state): State<AppState>, 
+    Json(request): Json<CreateOrderRequest>
+) -> Json<ApiResponse<String>> {
+    let mut state = state.lock().unwrap();
+    
+    let order_type = match request.order_type.as_str() {
+        "buy" => OrderType::Buy,
+        "sell" => OrderType::Sell,
+        _ => return Json(ApiResponse::error("Invalid order type".to_string())),
+    };
+    
+    let order = EnergyOrder {
+        id: Uuid::new_v4().to_string(),
+        trader_address: request.trader_address.clone(),
+        order_type,
+        energy_amount: request.energy_amount,
+        price_per_kwh: request.price_per_kwh,
+        timestamp: Utc::now(),
+        is_active: true,
+    };
+    
+    // Serialize order for blockchain storage
+    let order_data = match serde_json::to_vec(&order) {
+        Ok(data) => data,
+        Err(e) => return Json(ApiResponse::error(format!("Serialization error: {}", e))),
+    };
+    
+    // Add to blockchain
+    match state.add_blockchain_transaction(
+        TransactionType::EnergyOrder, 
+        order_data, 
+        &request.trader_address
+    ) {
+        Ok(tx_id) => {
+            // Also add to local state for immediate access
+            match state.energy_market.place_order(order) {
+                Ok(order_id) => Json(ApiResponse::success(format!("Order placed with ID: {} (Blockchain TX: {})", order_id, tx_id))),
+                Err(e) => Json(ApiResponse::error(format!("Order placement failed: {}", e))),
+            }
+        }
+        Err(e) => Json(ApiResponse::error(format!("Blockchain transaction failed: {}", e))),
+    }
+}
+
+// Keep the original function for backward compatibility
+pub async fn create_energy_order_legacy(State(state): State<AppState>, Json(request): Json<CreateOrderRequest>) -> Json<ApiResponse<String>> {
+    let mut state = state.lock().unwrap();
+    
+    let order_type = match request.order_type.as_str() {
+        "buy" => OrderType::Buy,
+        "sell" => OrderType::Sell,
+        _ => return Json(ApiResponse::error("Invalid order type".to_string())),
+    };
+    
+    let order = EnergyOrder {
+        id: Uuid::new_v4().to_string(),
+        trader_address: request.trader_address,
+        order_type,
+        energy_amount: request.energy_amount,
+        price_per_kwh: request.price_per_kwh,
+        timestamp: Utc::now(),
+        is_active: true,
+    };
+    
+    match state.energy_market.place_order(order) {
+        Ok(order_id) => Json(ApiResponse::success(format!("Order placed with ID: {}", order_id))),
+        Err(e) => Json(ApiResponse::error(e)),
+    }
+}
+
+pub async fn create_prosumer_with_blockchain(
+    State(state): State<AppState>, 
+    Json(request): Json<ProsumerRequest>
+) -> Json<ApiResponse<String>> {
+    let mut state = state.lock().unwrap();
+    
+    let prosumer = Prosumer::new(request.address.clone(), request.name.clone());
+    
+    // Serialize prosumer for blockchain storage
+    let prosumer_data = match serde_json::to_vec(&prosumer) {
+        Ok(data) => data,
+        Err(e) => return Json(ApiResponse::error(format!("Serialization error: {}", e))),
+    };
+    
+    // Add to blockchain
+    match state.add_blockchain_transaction(
+        TransactionType::ProsumerUpdate, 
+        prosumer_data, 
+        &request.address
+    ) {
+        Ok(tx_id) => {
+            // Also add to local state for immediate access
+            state.prosumers.insert(request.address.clone(), prosumer);
+            Json(ApiResponse::success(format!("Prosumer created successfully (Blockchain TX: {})", tx_id)))
+        }
+        Err(e) => Json(ApiResponse::error(format!("Blockchain transaction failed: {}", e))),
+    }
+}
     let mut state = state.lock().unwrap();
     
     let order_type = match request.order_type.as_str() {

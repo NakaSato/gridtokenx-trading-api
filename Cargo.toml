@@ -7,6 +7,8 @@ edition = "2021"
 name = "api-server"
 path = "src/main.rs"
 
+
+
 [[example]]
 name = "simple_client"
 path = "examples/simple_client.rs"
@@ -22,6 +24,10 @@ hyper = "1.0"
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+toml = "0.8"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "sqlite", "chrono", "uuid", "migrate"] }
 
 # Date/time
 chrono = { version = "0.4", features = ["serde"] }
@@ -42,9 +48,9 @@ thiserror = "1.0"
 # HTTP client for testing
 reqwest = { version = "0.11", features = ["json"] }
 
-# Local ledger core library
-ledger-core = { path = "../ledger" }
+
 
 [features]
-default = ["std"]
-std = []
+default = ["postgres"]
+postgres = ["sqlx/postgres"]
+sqlite = ["sqlx/sqlite"]

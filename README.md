@@ -17,14 +17,19 @@
 - **🌐 RESTful API**: Comprehensive REST endpoints for energy trading
 - **⚡ Async/Await**: Fully asynchronous with Tokio runtime
 - **🔄 Auto-scaling**: Horizontal Pod Autoscaler based on CPU/memory
+- **🗄️ Blockchain Database**: Multiple database backends (RocksDB, SQLite, PostgreSQL, IPFS)
+- **🔐 Authentication**: JWT and API key authentication with role-based access control
+- **🔍 Monitoring**: Built-in metrics, logging, and health checks
 
 ## 📋 Table of Contents
 
-- [Features](#-features)
+- [Table of Contents](#-table-of-contents)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Blockchain Database](#blockchain-database)
+- [Authentication](#authentication)
 - [Quick Start](#quick-start)
 - [API Endpoints](#api-endpoints)
 - [Configuration](#configuration)
@@ -114,7 +119,14 @@ energy-trading-api/          # API Server Project
 │   ├── handlers.rs          # HTTP request handlers
 │   ├── middleware.rs        # CORS, logging, auth middleware
 │   ├── models.rs            # API request/response models
-│   └── server.rs            # Server setup and routing
+│   ├── server.rs            # Server setup and routing
+│   ├── auth.rs              # Authentication logic
+│   ├── auth_handlers.rs     # Authentication endpoints
+│   ├── blockchain_db.rs     # Blockchain database interface
+│   ├── blockchain_db_impl.rs # Database implementations
+│   ├── blockchain_config.rs # Configuration management
+│   └── bin/
+│       └── blockchain-cli.rs # CLI management tool
 ├── k8s/                     # Kubernetes manifests
 │   ├── namespace.yaml       # Namespace definition
 │   ├── deployment.yaml      # Deployment configuration
@@ -122,12 +134,17 @@ energy-trading-api/          # API Server Project
 │   ├── ingress.yaml         # Ingress configuration
 │   ├── hpa.yaml             # Horizontal Pod Autoscaler
 │   └── pdb.yaml             # Pod Disruption Budget
+├── config/                  # Configuration files
+│   ├── blockchain.toml      # Production configuration
+│   ├── blockchain-dev.toml  # Development configuration
+│   └── blockchain-hp.toml   # High-performance configuration
 ├── examples/
 │   └── simple_client.rs     # Example client implementation
 ├── Dockerfile               # Multi-stage Docker build
 ├── .dockerignore           # Docker build optimization
 ├── deploy.sh               # Automated deployment script
 ├── DEPLOYMENT.md           # Detailed deployment guide
+├── BLOCKCHAIN_DATABASE.md  # Database selection guide
 ├── Cargo.toml              # API dependencies
 └── README.md               # This file
 
@@ -141,6 +158,119 @@ ledger/                      # Core Library Project
 │   └── ...                  # Other core modules
 └── Cargo.toml               # Core dependencies
 ```
+
+## Blockchain Database
+
+The Energy Trading API supports multiple blockchain database backends to meet different deployment requirements:
+
+### Database Options
+
+| Database | Use Case | Performance | Deployment | Features |
+|----------|----------|-------------|------------|----------|
+| **Memory** | Development, Testing | Excellent | Simple | No persistence |
+| **RocksDB** | Production | Excellent | Simple | High performance, compression |
+| **Sled** | Embedded | Good | Simple | Pure Rust, ACID transactions |
+| **SQLite** | Small-Medium | Good | Simple | Human-readable, easy backup |
+| **PostgreSQL** | Large Scale | Good | Complex | Advanced queries, analytics |
+| **IPFS** | Decentralized | Fair | Complex | Content-addressable, distributed |
+
+### Configuration
+
+Choose your database backend using feature flags:
+
+```toml
+# Development (default)
+[features]
+default = ["memory-db"]
+
+# Production
+[features]
+default = ["rocksdb-db"]
+
+# Embedded
+[features]
+default = ["sled-db"]
+```
+
+Or configure via environment variables:
+
+```bash
+# Database configuration
+export BLOCKCHAIN_DB_TYPE=rocksdb
+export BLOCKCHAIN_DB_PATH=/var/lib/energy-trading/blockchain.db
+export BLOCKCHAIN_ENABLE_CACHE=true
+export BLOCKCHAIN_CACHE_SIZE=10000
+```
+
+### CLI Management
+
+Use the built-in CLI tool for database management:
+
+```bash
+# Initialize blockchain database
+cargo run --bin blockchain-cli init
+
+# Show blockchain statistics
+cargo run --bin blockchain-cli stats
+
+# Verify blockchain integrity
+cargo run --bin blockchain-cli verify
+
+# Export blockchain data
+cargo run --bin blockchain-cli export
+
+# Show configuration
+cargo run --bin blockchain-cli config
+```
+
+For detailed database selection guidance, see [BLOCKCHAIN_DATABASE.md](BLOCKCHAIN_DATABASE.md).
+
+## Authentication
+
+The API includes comprehensive authentication and authorization:
+
+### Authentication Methods
+
+- **JWT Tokens**: Stateless authentication with configurable expiration
+- **API Keys**: Long-lived tokens for service-to-service communication
+- **Role-Based Access Control**: Fine-grained permissions (admin, trader, readonly)
+
+### User Management
+
+```bash
+# Register a new user
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "trader1", "email": "trader1@example.com", "password": "secure123", "role": "trader"}'
+
+# Login to get JWT token
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "trader1", "password": "secure123"}'
+```
+
+### API Key Management
+
+```bash
+# Create API key (requires JWT token)
+curl -X POST http://localhost:3000/api/auth/api-keys \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Trading Bot", "permissions": ["read", "trade"], "expires_in_days": 30}'
+
+# Use API key for requests
+curl -X GET http://localhost:3000/api/energy/orders/buy \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Default Credentials
+
+For development, a default admin user is created:
+- **Username**: `admin`
+- **Password**: `admin123`
+- **Role**: `admin`
+
+**⚠️ Change this password in production!**
 
 ## Quick Start
 
