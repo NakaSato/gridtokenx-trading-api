@@ -22,19 +22,19 @@
 DATABASE_URL=postgresql://user:pass@localhost/energy_trading
 DB_POOL_SIZE=10
 DB_TIMEOUT_SECONDS=30
-```
+```bash
 
 ### Option 2: SQLite (Good for Development/Small Scale)
 ```bash
 # Environment variables
 DATABASE_URL=sqlite:./energy_trading.db
-```
+```bash
 
 ### Option 3: MySQL (Alternative Production Option)
 ```bash
 # Environment variables
 DATABASE_URL=mysql://user:pass@localhost/energy_trading
-```
+```bash
 
 ## Simple Database Schema
 
@@ -123,7 +123,7 @@ CREATE TABLE market_statistics (
     active_sell_orders INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW()
 );
-```
+```bash
 
 ## Implementation Recommendation
 
@@ -131,7 +131,7 @@ CREATE TABLE market_statistics (
 ```toml
 [dependencies]
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
-```
+```bash
 
 ### 2. Simple Database Service
 ```rust
@@ -173,7 +173,7 @@ impl DatabaseService {
 
     // Add more methods for energy orders, trades, etc.
 }
-```
+```bash
 
 ### 3. Environment Configuration
 ```bash
@@ -182,7 +182,7 @@ DATABASE_URL=postgresql://energy_user:secure_password@localhost/energy_trading
 JWT_SECRET=your-super-secret-jwt-key
 API_HOST=0.0.0.0
 API_PORT=3000
-```
+```bash
 
 ## Migration Strategy
 

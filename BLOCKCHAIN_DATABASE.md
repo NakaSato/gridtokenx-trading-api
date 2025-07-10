@@ -142,7 +142,7 @@ All databases store the same core blockchain data:
 use energy_trading_api::blockchain_db::{BlockchainDbType, create_blockchain_db};
 
 let db = create_blockchain_db(BlockchainDbType::InMemory)?;
-```
+```bash
 
 ### Production Setup (RocksDB)
 ```rust
@@ -158,7 +158,7 @@ let config = BlockchainDbConfig {
 };
 
 let db = create_configured_blockchain_db(config)?;
-```
+```bash
 
 ### High-Availability Setup (PostgreSQL)
 ```rust
@@ -172,7 +172,7 @@ let config = BlockchainDbConfig {
 };
 
 let db = create_configured_blockchain_db(config)?;
-```
+```bash
 
 ## Environment Variables
 
@@ -188,7 +188,7 @@ DATABASE_URL=postgresql://user:pass@localhost/energy_trading
 
 # For IPFS
 IPFS_NODE_URL=http://localhost:5001
-```
+```bash
 
 ## Migration and Backup
 
@@ -199,7 +199,7 @@ cargo run --bin export-blockchain --features=rocksdb-db
 
 # Import to new database
 cargo run --bin import-blockchain --features=postgresql
-```
+```bash
 
 ### Backup Strategies
 - **RocksDB**: Copy database directory
@@ -223,7 +223,7 @@ use tracing::{info, error, debug};
 
 info!("Block added: index={}, hash={}", block.index, block.hash);
 debug!("Transaction processed: id={}, type={:?}", tx.id, tx.tx_type);
-```
+```bash
 
 ## Security Considerations
 
@@ -260,7 +260,7 @@ cargo run --bin blockchain-stats
 
 # Export blockchain data
 cargo run --bin export-blockchain --format=json
-```
+```bash
 
 ## Recommendations
 

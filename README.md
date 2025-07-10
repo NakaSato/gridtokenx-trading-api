@@ -2,21 +2,21 @@
 
 [![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![SQLx](https://img.shields.io/badge/sqlx-database-blue?style=for-the-badge)](https://github.com/launchbadge/sqlx)
-[![Axum](https://img.shields.io/badge/axum-web%20framework-orange?style=for-the-badge)](https://github.com/tokio-rs/axum)
+[![Axum](https://img.shields.io/badge/ntex-web%20framework-orange?style=for-the-badge)](https://github.com/ntex-rs/ntex)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org/)
-[![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 
-> A high-performance, production-ready REST API server for energy trading operations, built with Rust, SQLx, and designed for scalable deployment.
+> A high-performance, production-ready REST API server for energy trading operations, built with Rust, ntex, and PostgreSQL for scalable deployment.
+[![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 
 ## 🚀 Features
 
-- **🔥 High Performance**: Built with Rust and Axum for maximum throughput
-- **�️ SQL Database**: SQLx with PostgreSQL/SQLite support for production reliability
+- **🔥 High Performance**: Built with Rust and ntex for maximum throughput
+- **🗄️ SQL Database**: SQLx with PostgreSQL support for production reliability
 - **⚡ Async/Await**: Fully asynchronous with Tokio runtime
 - **🌐 RESTful API**: Comprehensive REST endpoints for energy trading
 - **📊 Production Ready**: Health checks, migrations, and proper error handling
-- **� Type Safety**: Compile-time verified SQL queries with SQLx
-- **� Database Migrations**: Automated schema management
+- **🔒 Type Safety**: Compile-time verified SQL queries with SQLx
+- **📈 Database Migrations**: Automated schema management
 - **🎯 Modern Architecture**: Clean separation of concerns with proper abstractions
 
 ## 📋 Table of Contents
@@ -63,7 +63,7 @@
 ```bash
 git clone <repository-url>
 cd energy-trading-api
-```
+```bash
 
 ### 2. Install Dependencies
 ```bash
@@ -74,7 +74,7 @@ source $HOME/.cargo/env
 # Verify installation
 cargo --version
 rustc --version
-```
+```bash
 
 ### 3. Build the Project
 ```bash
@@ -83,7 +83,7 @@ cargo build
 
 # Production build
 cargo build --release
-```
+```bash
 
 ### 4. Run Tests
 ```bash
@@ -92,7 +92,7 @@ cargo test
 
 # Run with output
 cargo test -- --nocapture
-```
+```bash
 
 ## Overview
 
@@ -102,7 +102,7 @@ This is the standalone API server for the Energy Trading Ledger system. It provi
 
 The API server is now separated from the core ledger library with complete containerization support:
 
-```
+```bash
 energy-trading-api/          # API Server Project
 ├── src/
 │   ├── main.rs              # API server entry point
@@ -148,7 +148,7 @@ ledger/                      # Core Library Project
 │   ├── energy_trading.rs    # Energy trading logic
 │   └── ...                  # Other core modules
 └── Cargo.toml               # Core dependencies
-```
+```bash
 
 ## Blockchain Database
 
@@ -181,7 +181,7 @@ default = ["rocksdb-db"]
 # Embedded
 [features]
 default = ["sled-db"]
-```
+```bash
 
 Or configure via environment variables:
 
@@ -191,7 +191,7 @@ export BLOCKCHAIN_DB_TYPE=rocksdb
 export BLOCKCHAIN_DB_PATH=/var/lib/energy-trading/blockchain.db
 export BLOCKCHAIN_ENABLE_CACHE=true
 export BLOCKCHAIN_CACHE_SIZE=10000
-```
+```bash
 
 ### CLI Management
 
@@ -212,7 +212,7 @@ cargo run --bin blockchain-cli export
 
 # Show configuration
 cargo run --bin blockchain-cli config
-```
+```bash
 
 For detailed database selection guidance, see [BLOCKCHAIN_DATABASE.md](BLOCKCHAIN_DATABASE.md).
 
@@ -238,7 +238,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "trader1", "password": "secure123"}'
-```
+```bash
 
 ### API Key Management
 
@@ -252,7 +252,7 @@ curl -X POST http://localhost:3000/api/auth/api-keys \
 # Use API key for requests
 curl -X GET http://localhost:3000/api/energy/orders/buy \
   -H "X-API-Key: YOUR_API_KEY"
-```
+```bash
 
 ### Default Credentials
 
@@ -270,13 +270,13 @@ For development, a default admin user is created:
 ```bash
 cd energy-trading-api
 cargo build --release
-```
+```bash
 
 ### 2. Run the API Server
 
 ```bash
 cargo run
-```
+```bash
 
 The server will start on `http://localhost:3000`.
 
@@ -293,7 +293,7 @@ curl http://localhost:3000/api/blockchain/info
 curl -X POST http://localhost:3000/api/energy/prosumers \
   -H "Content-Type: application/json" \
   -d '{"address": "alice", "name": "Alice Solar Farm"}'
-```
+```bash
 
 ## Dependencies
 
@@ -315,7 +315,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["serde", "v4"] }
-```
+```bash
 
 ## API Endpoints
 
@@ -364,7 +364,7 @@ To change the server port, modify `src/main.rs`:
 ```rust
 // Change from port 3000 to 8080
 start_server(8080).await;
-```
+```bash
 
 ### CORS Configuration
 
@@ -377,7 +377,7 @@ pub fn cors_layer() -> CorsLayer {
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([CONTENT_TYPE])
 }
-```
+```bash
 
 ## Development
 
@@ -402,7 +402,7 @@ curl -X POST http://localhost:3000/api/energy/prosumers \
   -d '{"address": "test_user", "name": "Test User"}'
 
 curl http://localhost:3000/api/energy/prosumers/test_user
-```
+```bash
 
 #### Docker Testing
 ```bash
@@ -412,7 +412,7 @@ docker run -p 3000:3000 energy-trading-api:test
 
 # Test health endpoint
 curl http://localhost:3000/health
-```
+```bash
 
 #### Kubernetes Testing
 ```bash
@@ -426,7 +426,7 @@ curl http://localhost:8080/health
 
 # Cleanup test environment
 kubectl delete namespace energy-trading-test
-```
+```bash
 
 #### Load Testing
 ```bash
@@ -441,7 +441,7 @@ hey -z 30s -c 10 http://localhost:3000/health
 hey -z 30s -c 5 -m POST -H "Content-Type: application/json" \
   -d '{"address": "test", "name": "Test"}' \
   http://localhost:3000/api/energy/prosumers
-```
+```bash
 
 #### Integration Testing
 ```bash
@@ -453,7 +453,7 @@ chmod +x test_api.sh
 cargo test
 cargo test --lib
 cargo test --integration
-```
+```bash
 
 ## Production Deployment
 
@@ -471,7 +471,7 @@ docker run -p 3000:3000 energy-trading-api:latest
 
 # Test the API
 curl http://localhost:3000/health
-```
+```bash
 
 #### Docker Features
 - **Multi-stage build**: Optimized for smaller image size
@@ -486,7 +486,7 @@ docker run -e RUST_LOG=debug -p 3000:3000 energy-trading-api:latest
 
 # Configure custom port
 docker run -e PORT=8080 -p 8080:8080 energy-trading-api:latest
-```
+```bash
 
 ### ☸️ Kubernetes Deployment
 
@@ -499,7 +499,7 @@ Complete Kubernetes manifests are provided in the `k8s/` directory for productio
 
 # Or apply manifests manually
 kubectl apply -f k8s/
-```
+```bash
 
 #### Kubernetes Resources
 - **Namespace**: `energy-trading` - Isolated environment
@@ -516,7 +516,7 @@ kubectl port-forward svc/energy-trading-api-service 8080:80 -n energy-trading
 
 # Test the API
 curl http://localhost:8080/health
-```
+```bash
 
 #### Monitoring & Scaling
 ```bash
@@ -531,7 +531,7 @@ kubectl get hpa -n energy-trading
 
 # Manual scaling
 kubectl scale deployment energy-trading-api --replicas=5 -n energy-trading
-```
+```bash
 
 ### 🛠️ Deployment Script
 
@@ -546,7 +546,7 @@ Commands:
   status  - Check deployment status
   cleanup - Remove deployment from Kubernetes
   help    - Show help message
-```
+```bash
 
 #### Examples
 ```bash
@@ -561,7 +561,7 @@ Commands:
 
 # Clean up everything
 ./deploy.sh cleanup
-```
+```bash
 
 ### 🔒 Security Features
 
@@ -590,7 +590,7 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "500m"
-```
+```bash
 
 #### Health Checks
 ```yaml
@@ -607,7 +607,7 @@ readinessProbe:
     port: 3000
   initialDelaySeconds: 5
   periodSeconds: 5
-```
+```bash
 
 #### Auto-scaling Configuration
 ```yaml
@@ -616,7 +616,7 @@ readinessProbe:
 # - Memory utilization > 80%
 # - Min replicas: 3
 # - Max replicas: 10
-```
+```bash
 
 ### 🌐 Ingress Configuration
 
@@ -639,7 +639,7 @@ spec:
             name: energy-trading-api-service
             port:
               number: 80
-```
+```bash
 
 ### 🔧 Troubleshooting
 
@@ -649,7 +649,7 @@ spec:
    ```bash
    # Check if image exists
    docker images | grep energy-trading-api
-   
+
    # Update deployment
    kubectl set image deployment/energy-trading-api energy-trading-api=energy-trading-api:latest -n energy-trading
    ```
@@ -658,7 +658,7 @@ spec:
    ```bash
    # Check pod details
    kubectl describe pod -l app=energy-trading-api -n energy-trading
-   
+
    # Check logs
    kubectl logs -l app=energy-trading-api -n energy-trading
    ```
@@ -667,7 +667,7 @@ spec:
    ```bash
    # Check service endpoints
    kubectl get endpoints -n energy-trading
-   
+
    # Test internal connectivity
    kubectl run test-pod --image=curlimages/curl -it --rm --restart=Never -n energy-trading -- curl http://energy-trading-api-service/health
    ```

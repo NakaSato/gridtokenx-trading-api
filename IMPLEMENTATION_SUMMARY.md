@@ -51,7 +51,7 @@ pub trait BlockchainDatabase: Send + Sync {
     fn get_chain_length(&self) -> u64;
     fn get_pending_transactions(&self) -> Vec<BlockchainTransaction>;
 }
-```
+```bash
 
 #### Transaction Types
 ```rust
@@ -65,7 +65,7 @@ pub enum TransactionType {
     ProsumerUpdate,
     SystemConfig,
 }
-```
+```bash
 
 #### Blockchain State Management
 ```rust
@@ -79,7 +79,7 @@ pub struct BlockchainState {
     pub governance_proposals: Vec<GovernanceProposal>,
     pub system_config: SystemConfig,
 }
-```
+```bash
 
 ### ✅ Configuration System
 
@@ -113,7 +113,7 @@ cargo run --bin blockchain-cli import
 
 # Show configuration
 cargo run --bin blockchain-cli config
-```
+```bash
 
 ### ✅ Documentation
 - **BLOCKCHAIN_DATABASE.md**: Comprehensive database selection guide
@@ -145,7 +145,7 @@ ipfs = ["ipfs-api-backend-hyper"]
 leveldb-db = ["leveldb"]
 rocksdb-db = ["rocksdb"]
 sled-db = ["sled"]
-```
+```bash
 
 ## 🚀 Usage Examples
 
@@ -159,7 +159,7 @@ export BLOCKCHAIN_CACHE_SIZE=10000
 
 # For PostgreSQL
 export DATABASE_URL=postgresql://user:pass@localhost/energy_trading
-```
+```bash
 
 ### Programmatic Configuration
 ```rust
@@ -174,7 +174,7 @@ let db = create_configured_blockchain_db(config.get_database_config())?;
 // Custom configuration
 let config = BlockchainConfig::from_file("config/blockchain.toml")?;
 let db = create_configured_blockchain_db(config.get_database_config())?;
-```
+```bash
 
 ## 🔄 Next Steps
 

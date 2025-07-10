@@ -1,0 +1,120 @@
+# Traefik Configuration (Alternative to NGINX)
+# docker-compose.yml for Traefik reverse proxy
+
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: energy-trading-traefik
+    command:
+      # Enable Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      
+      # Enable API and dashboard
+      - --api.dashboard=true
+      - --api.insecure=true
+      
+      # HTTP entrypoint
+      - --entrypoints.web.address=:80
+      # HTTPS entrypoint
+      - --entrypoints.websecure.address=:443
+      
+      # Let's Encrypt configuration
+      - --certificatesresolvers.letsencrypt.acme.email=admin@yourdomain.com
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      
+      # Logging
+      - --log.level=INFO
+      - --accesslog=true
+      
+      # Metrics
+      - --metrics.prometheus=true
+      
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - energy-trading-network
+    labels:
+      # HTTPS redirect
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  energy-trading-api:
+    build: .
+    container_name: energy-trading-api
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/energy_trading
+      - PORT=3000
+      - RUST_LOG=info
+    depends_on:
+      - postgres
+    networks:
+      - energy-trading-network
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      
+      # HTTP router
+      - "traefik.http.routers.energy-trading-api.rule=Host(`energy-trading-api.yourdomain.com`)"
+      - "traefik.http.routers.energy-trading-api.entrypoints=web"
+      - "traefik.http.routers.energy-trading-api.middlewares=redirect-to-https"
+      
+      # HTTPS router
+      - "traefik.http.routers.energy-trading-api-secure.rule=Host(`energy-trading-api.yourdomain.com`)"
+      - "traefik.http.routers.energy-trading-api-secure.entrypoints=websecure"
+      - "traefik.http.routers.energy-trading-api-secure.tls=true"
+      - "traefik.http.routers.energy-trading-api-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.energy-trading-api-secure.middlewares=api-auth,api-ratelimit,api-headers"
+      
+      # Service
+      - "traefik.http.services.energy-trading-api.loadbalancer.server.port=3000"
+      
+      # Middlewares
+      # Rate limiting
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=100"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=50"
+      
+      # Security headers
+      - "traefik.http.middlewares.api-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.api-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
+      - "traefik.http.middlewares.api-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+      - "traefik.http.middlewares.api-headers.headers.customresponseheaders.X-XSS-Protection=1; mode=block"
+      - "traefik.http.middlewares.api-headers.headers.customresponseheaders.Referrer-Policy=strict-origin-when-cross-origin"
+      
+      # CORS
+      - "traefik.http.middlewares.api-headers.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.api-headers.headers.accesscontrolallowheaders=DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+      - "traefik.http.middlewares.api-headers.headers.accesscontrolalloworiginlist=*"
+      
+      # Health check
+      - "traefik.http.services.energy-trading-api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.energy-trading-api.loadbalancer.healthcheck.interval=30s"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: energy-trading-postgres
+    environment:
+      POSTGRES_DB: energy_trading
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - energy-trading-network
+
+volumes:
+  postgres_data:
+
+networks:
+  energy-trading-network:
+    driver: bridge

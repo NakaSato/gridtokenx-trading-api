@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: energy-trading-postgres
+    environment:
+      POSTGRES_DB: energy_trading
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - energy-trading-network
+    
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: energy-trading-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@energytrading.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    networks:
+      - energy-trading-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+
+networks:
+  energy-trading-network:
+    driver: bridge

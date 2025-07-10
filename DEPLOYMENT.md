@@ -16,7 +16,7 @@ docker build -t energy-trading-api:latest .
 
 # Run the container locally
 docker run -p 3000:3000 energy-trading-api:latest
-```
+```bash
 
 ### Docker Image Features
 - **Multi-stage build**: Reduces final image size
@@ -42,7 +42,7 @@ docker run -p 3000:3000 energy-trading-api:latest
    ```bash
    # Build and push image
    ./deploy.sh build
-   
+
    # Deploy to Kubernetes
    kubectl apply -f k8s/
    ```
@@ -78,7 +78,7 @@ env:
   value: "info"
 - name: PORT
   value: "3000"
-```
+```bash
 
 #### Resource Limits
 ```yaml
@@ -89,7 +89,7 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "500m"
-```
+```bash
 
 ### Deployment Scripts
 
@@ -103,7 +103,7 @@ Commands:
   status  - Check deployment status
   cleanup - Remove deployment from Kubernetes
   help    - Show help message
-```
+```bash
 
 #### Examples
 ```bash
@@ -115,7 +115,7 @@ Commands:
 
 # Clean up
 ./deploy.sh cleanup
-```
+```bash
 
 ### Accessing the Application
 
@@ -126,7 +126,7 @@ kubectl port-forward svc/energy-trading-api-service 8080:80 -n energy-trading
 
 # Access the API
 curl http://localhost:8080/health
-```
+```bash
 
 #### Production (with Ingress)
 Update `k8s/ingress.yaml` with your domain:
@@ -138,7 +138,7 @@ spec:
     secretName: energy-trading-api-tls
   rules:
   - host: your-domain.com
-```
+```bash
 
 ### Monitoring & Observability
 
@@ -154,7 +154,7 @@ kubectl logs -f deployment/energy-trading-api -n energy-trading
 
 # View specific pod logs
 kubectl logs -f pod/energy-trading-api-xxx -n energy-trading
-```
+```bash
 
 #### Metrics
 ```bash
@@ -163,7 +163,7 @@ kubectl top pods -n energy-trading
 
 # Get HPA status
 kubectl get hpa -n energy-trading
-```
+```bash
 
 ### Troubleshooting
 
@@ -173,7 +173,7 @@ kubectl get hpa -n energy-trading
    ```bash
    # Check image exists
    docker images | grep energy-trading-api
-   
+
    # Update deployment with correct image
    kubectl set image deployment/energy-trading-api energy-trading-api=your-registry/energy-trading-api:latest -n energy-trading
    ```
@@ -182,7 +182,7 @@ kubectl get hpa -n energy-trading
    ```bash
    # Check pod status
    kubectl describe pod -l app=energy-trading-api -n energy-trading
-   
+
    # Check logs
    kubectl logs -l app=energy-trading-api -n energy-trading
    ```
@@ -191,7 +191,7 @@ kubectl get hpa -n energy-trading
    ```bash
    # Check service endpoints
    kubectl get endpoints -n energy-trading
-   
+
    # Test service internally
    kubectl run test-pod --image=curlimages/curl -it --rm --restart=Never -n energy-trading -- curl http://energy-trading-api-service/health
    ```
@@ -211,7 +211,7 @@ kubectl get hpa -n energy-trading
 ```bash
 # Scale to 5 replicas
 kubectl scale deployment energy-trading-api --replicas=5 -n energy-trading
-```
+```bash
 
 #### Auto-scaling
 The HPA automatically scales based on:
@@ -232,7 +232,7 @@ kubectl rollout status deployment/energy-trading-api -n energy-trading
 
 # Rollback if needed
 kubectl rollout undo deployment/energy-trading-api -n energy-trading
-```
+```bash
 
 ### Production Checklist
 
