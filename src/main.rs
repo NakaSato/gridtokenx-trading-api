@@ -1,10 +1,11 @@
-use energy_trading_api::server::start_server;
+// Import the server module directly 
+use std::io;
 
-#[tokio::main]
-async fn main() {
-    println!("🌟 Energy Trading Ledger - API Server 🌟");
-    println!("==========================================");
+#[ntex::main]
+async fn main() -> io::Result<()> {
+    println!("🌟 Energy Trading API Server 🌟");
+    println!("================================");
     
     // Start the API server on port 3000
-    start_server(3000).await;
+    energy_trading_api::server::start_server(3000).await
 }

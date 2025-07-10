@@ -4,6 +4,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use base64::Engine;
 
 // JWT Claims structure
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -122,7 +123,7 @@ pub struct AuthStore {
 
 impl AuthStore {
     pub fn new() -> Self {
-        let mut store = Self {
+        let store = Self {
             users: Arc::new(Mutex::new(HashMap::new())),
             api_keys: Arc::new(Mutex::new(HashMap::new())),
             jwt_secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| {
@@ -222,7 +223,7 @@ impl AuthStore {
     }
 
     pub fn create_api_key(&self, user_id: &str, request: CreateApiKeyRequest) -> Result<ApiKeyResponse, AuthError> {
-        let key = format!("etapi_{}", base64::encode(rand::random::<[u8; 32]>()));
+        let key = format!("etapi_{}", base64::engine::general_purpose::STANDARD.encode(rand::random::<[u8; 32]>()));
         let key_hash = bcrypt::hash(&key, bcrypt::DEFAULT_COST)
             .map_err(|_| AuthError::Internal("Key hashing failed".to_string()))?;
 
@@ -277,6 +278,16 @@ impl AuthStore {
         users.get(user_id)
             .cloned()
             .ok_or(AuthError::UserNotFound)
+    }
+
+    pub fn verify_jwt(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+        let key = DecodingKey::from_secret(secret.as_ref());
+        let validation = Validation::new(Algorithm::HS256);
+        
+        match decode::<Claims>(token, &key, &validation) {
+            Ok(token_data) => Ok(token_data.claims),
+            Err(err) => Err(err),
+        }
     }
 }
 

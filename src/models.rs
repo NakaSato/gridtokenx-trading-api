@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 // API Request/Response Models
 
@@ -30,21 +32,54 @@ impl<T> ApiResponse<T> {
     }
 }
 
-// Blockchain API Models
+// Prosumer API Models
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BlockchainInfo {
-    pub chain_length: usize,
-    pub difficulty: usize,
-    pub pending_transactions: usize,
-    pub latest_block_hash: String,
+pub struct CreateProsumerRequest {
+    pub address: String,
+    pub name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MineBlockRequest {
-    pub miner_address: String,
+pub struct UpdateProsumerRequest {
+    pub name: Option<String>,
+    pub energy_generated: Option<f64>,
+    pub energy_consumed: Option<f64>,
 }
 
-// Token System API Models
+// Order API Models
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateOrderRequest {
+    pub prosumer_address: String,
+    pub order_type: String, // "buy" or "sell"
+    pub energy_amount: f64,
+    pub price_per_unit: f64,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateOrderRequest {
+    pub status: Option<String>,
+    pub energy_amount: Option<f64>,
+    pub price_per_unit: Option<f64>,
+}
+
+// Trade API Models
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExecuteTradeRequest {
+    pub buy_order_id: Uuid,
+    pub sell_order_id: Uuid,
+    pub price_per_unit: Option<f64>,
+}
+
+// Token transfer API Models
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransferTokensRequest {
+    pub from_address: String,
+    pub to_address: String,
+    pub amount: f64,
+    pub token_type: String, // "grid_tokens" or "watt_tokens"
+}
+// Legacy API Models (for backward compatibility)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateAccountRequest {
     pub address: String,
@@ -78,15 +113,6 @@ pub struct VoteRequest {
     pub voter: String,
     pub vote: bool, // true for yes, false for no
     pub stake_amount: f64,
-}
-
-// Energy Trading API Models
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateOrderRequest {
-    pub trader_address: String,
-    pub order_type: String, // "buy" or "sell"
-    pub energy_amount: f64,
-    pub price_per_kwh: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

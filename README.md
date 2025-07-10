@@ -1,49 +1,40 @@
-# Energy Trading API - Separated Backend Service
+# Energy Trading API - Production-Ready REST Service
 
 [![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![SQLx](https://img.shields.io/badge/sqlx-database-blue?style=for-the-badge)](https://github.com/launchbadge/sqlx)
 [![Axum](https://img.shields.io/badge/axum-web%20framework-orange?style=for-the-badge)](https://github.com/tokio-rs/axum)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org/)
+[![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 
-> A high-performance, containerized REST API server for energy trading and blockchain operations, built with Rust and designed for Kubernetes deployment.
+> A high-performance, production-ready REST API server for energy trading operations, built with Rust, SQLx, and designed for scalable deployment.
 
 ## 🚀 Features
 
 - **🔥 High Performance**: Built with Rust and Axum for maximum throughput
-- **🐳 Containerized**: Docker-ready with multi-stage builds
-- **☸️ Kubernetes Native**: Complete K8s manifests with auto-scaling
-- **🔒 Security First**: Non-root containers, security contexts, and resource limits
-- **📊 Production Ready**: Health checks, monitoring, and observability
-- **🌐 RESTful API**: Comprehensive REST endpoints for energy trading
+- **�️ SQL Database**: SQLx with PostgreSQL/SQLite support for production reliability
 - **⚡ Async/Await**: Fully asynchronous with Tokio runtime
-- **🔄 Auto-scaling**: Horizontal Pod Autoscaler based on CPU/memory
-- **🗄️ Blockchain Database**: Multiple database backends (RocksDB, SQLite, PostgreSQL, IPFS)
-- **🔐 Authentication**: JWT and API key authentication with role-based access control
-- **🔍 Monitoring**: Built-in metrics, logging, and health checks
+- **🌐 RESTful API**: Comprehensive REST endpoints for energy trading
+- **📊 Production Ready**: Health checks, migrations, and proper error handling
+- **� Type Safety**: Compile-time verified SQL queries with SQLx
+- **� Database Migrations**: Automated schema management
+- **🎯 Modern Architecture**: Clean separation of concerns with proper abstractions
 
 ## 📋 Table of Contents
 
-- [Table of Contents](#-table-of-contents)
+- [Features](#-features)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Blockchain Database](#blockchain-database)
-- [Authentication](#authentication)
-- [Quick Start](#quick-start)
-- [API Endpoints](#api-endpoints)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Production Deployment](#production-deployment)
-  - [🐳 Docker Deployment](#-docker-deployment)
-  - [☸️ Kubernetes Deployment](#️-kubernetes-deployment)
-  - [🛠️ Deployment Script](#️-deployment-script)
-  - [🔒 Security Features](#-security-features)
-  - [📊 Production Configuration](#-production-configuration)
-- [Benefits of Separation](#benefits-of-separation)
-- [Future Enhancements](#future-enhancements)
-- [Related Projects](#related-projects)
-- [License](#license)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+- [API Endpoints](#-api-endpoints)
+- [Database](#-database)
+- [Configuration](#-configuration)
+- [Development](#-development)
+- [Migration from Blockchain](#-migration-from-blockchain)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## 🛠️ Prerequisites
 

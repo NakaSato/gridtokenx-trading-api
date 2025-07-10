@@ -1,218 +1,117 @@
-use crate::handlers::*;
-use crate::middleware::{cors_layer, request_logging, auth_middleware, security_headers_middleware};
-use crate::auth::AuthStore;
-use crate::auth_handlers::*;
-use axum::{
-    middleware,
-    routing::{get, post, delete},
-    Router,
-};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::io;
 
-pub fn create_app() -> Router {
-    let state = Arc::new(Mutex::new(LedgerState::new()));
-    let auth_store = Arc::new(AuthStore::new());
+use ntex::web::{self, middleware, App, HttpServer};
 
-    // Public routes (no authentication required)
-    let public_routes = Router::new()
-        .route("/health", get(health_check))
-        .route("/api/auth/login", post(login))
-        .route("/api/auth/register", post(register));
+use crate::database::DatabaseService;
+use crate::handlers;
 
-    // Protected routes (authentication required)
-    let protected_routes = Router::new()
-        // Authentication management
-        .route("/api/auth/me", get(get_current_user))
-        .route("/api/auth/refresh", post(refresh_token))
-        .route("/api/auth/api-keys", get(list_api_keys))
-        .route("/api/auth/api-keys", post(create_api_key))
-        .route("/api/auth/api-keys/:key_id", delete(revoke_api_key))
-        
-        // Blockchain endpoints
-        .route("/api/blockchain/info", get(get_blockchain_info))
-        .route("/api/blockchain/blocks", get(get_blocks))
-        .route("/api/blockchain/blocks/:index", get(get_block))
-        .route("/api/blockchain/mine", post(mine_block))
-        .route("/api/blockchain/transactions/pending", get(get_pending_transactions))
-        
-        // Token system endpoints
-        .route("/api/tokens/accounts", post(create_token_account))
-        .route("/api/tokens/balance/:address", get(get_token_balance))
-        .route("/api/tokens/transfer", post(transfer_tokens))
-        .route("/api/tokens/stake", post(stake_tokens))
-        .route("/api/tokens/unstake", post(unstake_tokens))
-        .route("/api/tokens/rewards/:address", post(claim_rewards))
-        
-        // Governance endpoints
-        .route("/api/governance/proposals", get(get_governance_proposals))
-        .route("/api/governance/proposals", post(create_governance_proposal))
-        .route("/api/governance/vote", post(vote_on_proposal))
-        
-        // Energy trading endpoints
-        .route("/api/energy/prosumers", post(create_prosumer))
-        .route("/api/energy/prosumers", get(get_all_prosumers))
-        .route("/api/energy/prosumers/:address", get(get_prosumer))
-        .route("/api/energy/generation", post(update_energy_generation))
-        .route("/api/energy/consumption", post(update_energy_consumption))
-        
-        // Order management endpoints
-        .route("/api/energy/orders", post(create_energy_order))
-        .route("/api/energy/orders/cancel", post(cancel_energy_order))
-        .route("/api/energy/orders/buy", get(get_buy_orders))
-        .route("/api/energy/orders/sell", get(get_sell_orders))
-        
-        // Market data endpoints
-        .route("/api/energy/trades", get(get_trade_history))
-        .route("/api/energy/statistics", get(get_market_statistics))
-        
-        .with_state(state.clone())
-        .layer(middleware::from_fn_with_state(auth_store.clone(), auth_middleware));
+pub async fn start_server(port: u16) -> io::Result<()> {
+    env_logger::init();
 
-    // Combine public and protected routes
-    Router::new()
-        .merge(public_routes)
-        .merge(protected_routes)
-        .with_state(auth_store)
-        .layer(middleware::from_fn(security_headers_middleware))
-        .layer(middleware::from_fn(request_logging))
-        .layer(cors_layer())
-}
-use crate::handlers::*;
-use crate::middleware::{cors_layer, request_logging, auth_middleware, security_headers_middleware};
-use crate::auth::AuthStore;
-use crate::auth_handlers::*;
-use axum::{
-    middleware,
-    routing::{get, post, delete},
-    Router,
-};
-use std::sync::{Arc, Mutex};
+    // Load environment variables from .env file if it exists
+    dotenv::dotenv().ok();
 
-pub fn create_app() -> Router {
-    let state = Arc::new(Mutex::new(LedgerState::new()));
-    let auth_store = Arc::new(AuthStore::new());
-
-    // Public routes (no authentication required)
-    let public_routes = Router::new()
-        .route("/health", get(health_check))
-        .route("/api/auth/login", post(login))
-        .route("/api/auth/register", post(register));
-
-    // Protected routes (authentication required)
-    let protected_routes = Router::new()
-        // Authentication management
-        .route("/api/auth/me", get(get_current_user))
-        .route("/api/auth/refresh", post(refresh_token))
-        .route("/api/auth/api-keys", get(list_api_keys))
-        .route("/api/auth/api-keys", post(create_api_key))
-        .route("/api/auth/api-keys/:key_id", delete(revoke_api_key))
-        
-        // Blockchain endpoints
-        .route("/api/blockchain/info", get(get_blockchain_info))
-        .route("/api/blockchain/blocks", get(get_blocks))
-        .route("/api/blockchain/blocks/:index", get(get_block))
-        .route("/api/blockchain/mine", post(mine_block))
-        .route("/api/blockchain/transactions/pending", get(get_pending_transactions))
-        
-        // Token system endpoints
-        .route("/api/tokens/accounts", post(create_token_account))
-        .route("/api/tokens/balance/:address", get(get_token_balance))
-        .route("/api/tokens/transfer", post(transfer_tokens))
-        .route("/api/tokens/stake", post(stake_tokens))
-        .route("/api/tokens/unstake", post(unstake_tokens))
-        .route("/api/tokens/rewards/:address", post(claim_rewards))
-        
-        // Governance endpoints
-        .route("/api/governance/proposals", get(get_governance_proposals))
-        .route("/api/governance/proposals", post(create_governance_proposal))
-        .route("/api/governance/vote", post(vote_on_proposal))
-        
-        // Energy trading endpoints
-        .route("/api/energy/prosumers", post(create_prosumer))
-        .route("/api/energy/prosumers", get(get_all_prosumers))
-        .route("/api/energy/prosumers/:address", get(get_prosumer))
-        .route("/api/energy/generation", post(update_energy_generation))
-        .route("/api/energy/consumption", post(update_energy_consumption))
-        
-        // Order management endpoints
-        .route("/api/energy/orders", post(create_energy_order))
-        .route("/api/energy/orders/cancel", post(cancel_energy_order))
-        .route("/api/energy/orders/buy", get(get_buy_orders))
-        .route("/api/energy/orders/sell", get(get_sell_orders))
-        
-        // Market data endpoints
-        .route("/api/energy/trades", get(get_trade_history))
-        .route("/api/energy/statistics", get(get_market_statistics))
-        
-        .with_state(state.clone())
-        .layer(middleware::from_fn_with_state(auth_store.clone(), auth_middleware));
-
-    // Combine public and protected routes
-    Router::new()
-        .merge(public_routes)
-        .merge(protected_routes)
-        .with_state(auth_store)
-        .layer(middleware::from_fn(security_headers_middleware))
-        .layer(middleware::from_fn(request_logging))
-        .layer(cors_layer())
-}
-
-pub async fn start_server(port: u16) {
-    let app = create_app();
+    // Get database URL from environment or use PostgreSQL default
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgresql://postgres:password@localhost:5432/energy_trading".to_string());
     
-    println!("🚀 Energy Trading Ledger API Server starting on port {}", port);
-    println!("� Authentication enabled with JWT and API Key support");
-    println!("�📋 Available endpoints:");
+    log::info!("Connecting to database: {}", database_url);
     
-    // Public endpoints
-    println!("   🌐 Public endpoints:");
-    println!("   GET  /health - Health check");
-    println!("   POST /api/auth/login - User login");
-    println!("   POST /api/auth/register - User registration");
-    
-    // Protected endpoints
-    println!("   🔒 Protected endpoints (require authentication):");
-    println!("   GET  /api/auth/me - Get current user info");
-    println!("   POST /api/auth/refresh - Refresh JWT token");
-    println!("   GET  /api/auth/api-keys - List user's API keys");
-    println!("   POST /api/auth/api-keys - Create new API key");
-    println!("   DEL  /api/auth/api-keys/:key_id - Revoke API key");
-    println!("   GET  /api/blockchain/info - Get blockchain information");
-    println!("   GET  /api/blockchain/blocks - Get all blocks");
-    println!("   GET  /api/blockchain/blocks/:index - Get specific block");
-    println!("   POST /api/blockchain/mine - Mine a new block");
-    println!("   GET  /api/blockchain/transactions/pending - Get pending transactions");
-    println!("   POST /api/tokens/accounts - Create token account");
-    println!("   GET  /api/tokens/balance/:address - Get token balance");
-    println!("   POST /api/tokens/transfer - Transfer tokens");
-    println!("   POST /api/tokens/stake - Stake tokens");
-    println!("   POST /api/tokens/unstake - Unstake tokens");
-    println!("   POST /api/tokens/rewards/:address - Claim staking rewards");
-    println!("   GET  /api/governance/proposals - Get governance proposals");
-    println!("   POST /api/governance/proposals - Create governance proposal");
-    println!("   POST /api/governance/vote - Vote on proposal");
-    println!("   POST /api/energy/prosumers - Create prosumer");
-    println!("   GET  /api/energy/prosumers - Get all prosumers");
-    println!("   GET  /api/energy/prosumers/:address - Get specific prosumer");
-    println!("   POST /api/energy/generation - Update energy generation");
-    println!("   POST /api/energy/consumption - Update energy consumption");
-    println!("   POST /api/energy/orders - Create energy order");
-    println!("   POST /api/energy/orders/cancel - Cancel energy order");
-    println!("   GET  /api/energy/orders/buy - Get buy orders");
-    println!("   GET  /api/energy/orders/sell - Get sell orders");
-    println!("   GET  /api/energy/trades - Get trade history");
-    println!("   GET  /api/energy/statistics - Get market statistics");
-    
-    println!("\n🔑 Authentication methods:");
-    println!("   Bearer Token: Authorization: Bearer <jwt_token>");
-    println!("   API Key: X-API-Key: <api_key>");
-    println!("\n👤 Default admin user:");
-    println!("   Username: admin");
-    println!("   Password: admin123");
-    
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
-        .await
-        .unwrap();
-    
-    axum::serve(listener, app).await.unwrap();
+    // Initialize database service
+    let db_service = match DatabaseService::new(&database_url).await {
+        Ok(service) => {
+            log::info!("Database connection established");
+            service
+        }
+        Err(e) => {
+            log::error!("Failed to connect to database: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Run migrations
+    if let Err(e) = db_service.run_migrations().await {
+        log::error!("Failed to run migrations: {}", e);
+        std::process::exit(1);
+    }
+    log::info!("Database migrations completed");
+
+    let db_service = Arc::new(db_service);
+
+    log::info!("Starting Energy Trading API server on port {}", port);
+
+    HttpServer::new(move || {
+        App::new()
+            .state(db_service.clone())
+            .wrap(middleware::Logger::default())
+            .wrap(middleware::DefaultHeaders::new().header("X-Version", "1.0.0"))
+            .service(
+                web::resource("/")
+                    .route(web::get().to(handlers::root))
+            )
+            .service(
+                web::resource("/health")
+                    .route(web::get().to(handlers::health_check))
+            )
+            // Prosumer endpoints
+            .service(
+                web::resource("/prosumers")
+                    .route(web::post().to(handlers::create_prosumer))
+                    .route(web::get().to(handlers::get_all_prosumers))
+            )
+            .service(
+                web::resource("/prosumers/{address}")
+                    .route(web::get().to(handlers::get_prosumer))
+                    .route(web::put().to(handlers::update_prosumer))
+            )
+            .service(
+                web::resource("/prosumers/{address}/stats")
+                    .route(web::get().to(handlers::get_prosumer_stats))
+            )
+            // Order endpoints
+            .service(
+                web::resource("/orders")
+                    .route(web::post().to(handlers::create_energy_order))
+                    .route(web::get().to(handlers::get_all_energy_orders))
+            )
+            .service(
+                web::resource("/orders/{order_id}")
+                    .route(web::get().to(handlers::get_energy_order))
+                    .route(web::put().to(handlers::update_energy_order))
+                    .route(web::delete().to(handlers::cancel_energy_order))
+            )
+            // Trade endpoints
+            .service(
+                web::resource("/trades")
+                    .route(web::post().to(handlers::execute_trade))
+                    .route(web::get().to(handlers::get_all_trades))
+            )
+            .service(
+                web::resource("/trades/{trade_id}")
+                    .route(web::get().to(handlers::get_trade))
+            )
+            // Token transfer endpoints
+            .service(
+                web::resource("/transfer")
+                    .route(web::post().to(handlers::transfer_tokens))
+            )
+            // Statistics endpoints
+            .service(
+                web::resource("/stats/market")
+                    .route(web::get().to(handlers::get_market_stats))
+            )
+            .service(
+                web::resource("/stats/database")
+                    .route(web::get().to(handlers::get_database_stats))
+            )
+            // Order matching
+            .service(
+                web::resource("/match-orders")
+                    .route(web::post().to(handlers::match_orders))
+            )
+    })
+    .bind(format!("127.0.0.1:{}", port))?
+    .run()
+    .await
 }
