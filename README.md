@@ -443,10 +443,57 @@ hey -z 30s -c 5 -m POST -H "Content-Type: application/json" \
   http://localhost:3000/api/energy/prosumers
 ```bash
 
-#### Integration Testing
+### Testing & Validation
+
+The project includes comprehensive testing and validation scripts:
+
+#### Quick API Testing
 ```bash
-# Use the provided test script
-chmod +x test_api.sh
+# Basic API functionality test
+./test_api.sh
+```bash
+
+#### PostgreSQL Integration Testing
+```bash
+# Test with PostgreSQL database
+./test_postgres.sh
+```bash
+
+#### Comprehensive Test Suite
+```bash
+# Run all tests (unit, integration, API)
+./run_tests.sh
+
+# Run specific test types
+./run_tests.sh --unit              # Unit tests only
+./run_tests.sh --api               # API tests only
+./run_tests.sh --performance       # Include performance tests
+./run_tests.sh --coverage          # Generate code coverage
+
+# Verbose output
+./run_tests.sh --verbose
+```bash
+
+#### Project Validation
+```bash
+# Validate entire project setup
+./validate_project.sh
+
+# Quick validation (no server tests)
+./validate_project.sh --quick
+
+# Skip specific validations
+./validate_project.sh --no-build --no-db
+```bash
+
+#### Specialized Tests
+```bash
+# Test order cancellation functionality
+./test_cancel_fix.sh
+
+# Clean and format all scripts/docs
+./clean_project.sh
+```bash
 ./test_api.sh
 
 # Or run specific tests
@@ -674,11 +721,48 @@ spec:
 
 ### 📚 Additional Documentation
 
-For detailed deployment information, see:
-- `DEPLOYMENT.md` - Comprehensive deployment guide
-- `k8s/` directory - Kubernetes manifests
-- `Dockerfile` - Container configuration
-- `.dockerignore` - Docker build optimization
+For detailed information, see:
+- **[POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md)** - PostgreSQL setup and configuration
+- **[REVERSE_PROXY_GUIDE.md](REVERSE_PROXY_GUIDE.md)** - Production reverse proxy setup
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Comprehensive deployment guide
+- **`k8s/`** directory - Kubernetes manifests and configurations
+- **`migrations/`** directory - Database schema migrations
+
+### 🛠️ Available Scripts
+
+The project includes several utility scripts for development and deployment:
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| **`setup_postgres.sh`** | PostgreSQL setup and configuration | `./setup_postgres.sh [options]` |
+| **`test_api.sh`** | Basic API functionality testing | `./test_api.sh` |
+| **`test_postgres.sh`** | PostgreSQL integration testing | `./test_postgres.sh` |
+| **`test_cancel_fix.sh`** | Order cancellation functionality test | `./test_cancel_fix.sh` |
+| **`run_tests.sh`** | Comprehensive test suite runner | `./run_tests.sh [options]` |
+| **`validate_project.sh`** | Complete project validation | `./validate_project.sh [options]` |
+| **`deploy.sh`** | Kubernetes deployment automation | `./deploy.sh [command]` |
+| **`clean_project.sh`** | Code formatting and cleanup | `./clean_project.sh` |
+
+#### Script Examples
+
+```bash
+# Setup PostgreSQL with custom settings
+./setup_postgres.sh --db-name mydb --user myuser --password mypass
+
+# Run comprehensive tests with coverage
+./run_tests.sh --coverage --verbose
+
+# Quick project validation
+./validate_project.sh --quick
+
+# Deploy to Kubernetes with custom registry
+REGISTRY=myregistry.com/ ./deploy.sh deploy
+
+# Check deployment status
+./deploy.sh status
+```bash
+
+All scripts include detailed help information accessible with the `--help` flag.
 
 ### 🚀 Production Checklist
 

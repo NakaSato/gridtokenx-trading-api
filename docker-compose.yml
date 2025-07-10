@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: energy-trading-postgres
@@ -16,6 +17,32 @@ services:
       - ./migrations:/docker-entrypoint-initdb.d
     networks:
       - energy-trading-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+  # Energy Trading API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: energy-trading-api
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/energy_trading
+      RUST_LOG: info
+      PORT: 3000
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - energy-trading-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
     
   # Optional: pgAdmin for database management
   pgadmin:
@@ -30,6 +57,8 @@ services:
       - energy-trading-network
     depends_on:
       - postgres
+    profiles:
+      - admin
 
 volumes:
   postgres_data:

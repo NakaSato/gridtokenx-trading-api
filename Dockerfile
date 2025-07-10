@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Rust Energy Trading API
 # Stage 1: Build stage
-FROM rust:1.75-slim-bullseye as builder
+FROM rust:1.75-slim-bullseye AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -23,18 +23,18 @@ RUN cargo build --release && rm -rf src
 
 # Copy the actual source code
 COPY src ./src
-COPY examples ./examples
 
 # Build the application
-RUN cargo build --release --bin api-server
+RUN cargo build --release
 
 # Stage 2: Runtime stage
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libssl1.1 \
+    libssl3 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security
@@ -44,7 +44,7 @@ RUN useradd -r -s /bin/false -m -d /app appuser
 WORKDIR /app
 
 # Copy the built binary from builder stage
-COPY --from=builder /app/target/release/api-server /app/api-server
+COPY --from=builder /app/target/release/energy-trading-api /app/energy-trading-api
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
@@ -64,4 +64,4 @@ ENV RUST_LOG=info
 ENV PORT=3000
 
 # Run the application
-CMD ["./api-server"]
+CMD ["./energy-trading-api"]
